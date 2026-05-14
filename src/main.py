@@ -90,13 +90,13 @@ def check_scheduled_recordings():
         print("No requests")
         return
 
-    local_media = [movie["tmdbId"] for movie in jellyfin.get_local_movies()]
+    local_media = [int(movie["tmdbId"]) for movie in jellyfin.get_local_movies()]
     scheduled_movies = jellyfin.get_scheduled_movies()
     scheduled_movie_titles = [movie["title"] for movie in scheduled_movies]
     epg_data = jellyfin.get_movies_from_epg()
 
     for request in requests:
-        if request["tmdbId"] in local_media:
+        if int(request["tmdbId"]) in local_media:
             print(f"Local media found for {request["title"]}. Deleting request.")
             db.delete_request(request["tmdbId"])
         elif request["title"] in scheduled_movie_titles or request["originalTitle"] in scheduled_movie_titles:
