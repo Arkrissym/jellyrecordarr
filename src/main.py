@@ -35,8 +35,26 @@ def get_root_folder():
 def get_tags():
     return []
 
+@app.route("/api/v3/command", methods=["POST"])
+def run_command():
+    # accept any command, do nothing, return success
+    print(f"received command: {request.json}")
+    return make_response('', 200)
+
+@app.route("/api/v3/queue")
+def get_queue():
+    # return requests as 'queued', local media as 'completed'
+    movie_requests = [{"id": request["id"], "movieId": request["tmdbId"], "title": request["title"], "status": "queued"} for request in db.get_movie_requests()]
+    movie_requests += [{"id": movie["tmdbId"], "movieId": movie["tmdbId"], "title": movie["title"], "status": "completed"} for movie in jellyfin.get_local_movies()]
+    return {
+        "page": 0,
+        "pageSize": len(movie_requests),
+        "totalRecords": len(movie_requests),
+        "records": movie_requests
+    }
+
 @app.route("/api/v3/movie", methods=["GET", "PUT", "POST"])
-def get_movies():
+def movies():
     if request.method == "GET":
         # local files + scheduled recordings + epg + requested movies
         return jellyfin.get_movies() + db.get_movie_requests()
