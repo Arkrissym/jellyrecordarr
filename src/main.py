@@ -133,13 +133,15 @@ def check_scheduled_recordings():
                     for scheduled_movie in scheduled_movies:
                         schedule_start = datetime.datetime.fromisoformat(scheduled_movie["StartDate"])
                         schedule_end = datetime.datetime.fromisoformat(scheduled_movie["EndDate"])
-                        if (start > schedule_start and start < schedule_end) or (end > schedule_start and end < schedule_end):
+                        if (start >= schedule_start and start <= schedule_end) or (end >= schedule_start and end <= schedule_end) or (start <= schedule_start and end >= schedule_end):
                             print(f"Not scheduling '{request["title"]}' at {start}. Conflicting with recording of '{scheduled_movie["title"]}' at {schedule_start}")
                             schedule_conflict = True
                             schedule_conflicts += 1
                     if not schedule_conflict:
                         print(f"Scheduling recording for '{request["title"]}'")
                         jellyfin.schedule_movie_recording(epg_movie["id"])
+                        scheduled_movies.append(epg_movie)
+                        scheduled_movie_titles.append(epg_movie["title"])
                         scheduled = True
             if not scheduled and schedule_conflicts == 0:
                 print(f"'{request["title"]}' not scheduled. No match found in epg.")
