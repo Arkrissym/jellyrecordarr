@@ -1,6 +1,7 @@
 # Jellyrecordarr
 
-- sonarr/radarr api for compatibility with tools like seer
+- radarr api for compatibility with tools like seer
+- sonarr api & series support is planned
 - automatically schedule tv recordings in jellyfin
 - prevent concurrent scheduled recordings
 
@@ -16,7 +17,8 @@ services:
       - JELLYFIN_HOST="http://your-host:8096"
       - JELLYFIN_API_KEY="your-api-key"
       - TMDB_API_KEY="your-api-key"
-      - TMDB_LOCALE="de-DE"
+      - TMDB_LANGUAGE=de
+      - TMDB_COUNTRY=de
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5000/api/v3/system/status || exit 1
       start_period: 20s

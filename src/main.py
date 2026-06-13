@@ -10,7 +10,7 @@ from db import RequestsDB
 app = Flask(__name__)
 
 jellyfin = Jellyfin(os.getenv("JELLYFIN_HOST"), os.getenv("JELLYFIN_API_KEY"))
-tmdb = Tmdb(os.getenv("TMDB_API_KEY"), os.getenv("TMDB_LOCALE"))
+tmdb = Tmdb(os.getenv("TMDB_API_KEY"), os.getenv("TMDB_LANGUAGE"), os.getenv("TMDB_COUNTRY"))
 db = RequestsDB()
 
 @app.route("/api/v3/system/status")
@@ -114,10 +114,16 @@ def check_scheduled_recordings():
     epg_data = jellyfin.get_movies_from_epg()
 
     for request in requests:
+        # load all alternative titles for the requested movie
+        request_titles = tmdb.get_titles_by_id(request["tmdbId"])
+        request_titles.append(request["title"])
+        request_titles.append(request["originalTitle"])
+        print(request_titles)
+
         if int(request["tmdbId"]) in local_media:
             print(f"Local media found for {request["title"]}. Deleting request.")
             db.delete_request(request["tmdbId"])
-        elif request["title"] in scheduled_movie_titles or request["originalTitle"] in scheduled_movie_titles:
+        elif len(list(filter(lambda x: x in scheduled_movie_titles, request_titles))) > 0:
             print(f"Found existing scheduled recording for '{request["title"]}'")
         else:
             scheduled = False
@@ -125,7 +131,7 @@ def check_scheduled_recordings():
             for epg_movie in epg_data:
                 if scheduled:
                     break
-                if request["title"] == epg_movie["title"] or request["originalTitle"] == epg_movie["title"]:
+                if epg_movie["title"] in request_titles:
                     schedule_conflict = False
                     start = datetime.datetime.fromisoformat(epg_movie["StartDate"])
                     end = datetime.datetime.fromisoformat(epg_movie["EndDate"])
@@ -138,7 +144,7 @@ def check_scheduled_recordings():
                             schedule_conflict = True
                             schedule_conflicts += 1
                     if not schedule_conflict:
-                        print(f"Scheduling recording for '{request["title"]}'")
+                        print(f"Scheduling recording for '{request["title"]}' ('{epg_movie["title"]}')")
                         jellyfin.schedule_movie_recording(epg_movie["id"])
                         scheduled_movies.append(epg_movie)
                         scheduled_movie_titles.append(epg_movie["title"])
