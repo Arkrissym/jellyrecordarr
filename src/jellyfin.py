@@ -37,7 +37,7 @@ class Jellyfin:
         params = {"IncludeItemTypes": media_type, "Recursive": True, "enableImages": False, "fields": "OriginalTitle,ProviderIds", "hasTmdbId": True}
         result = requests.get(self.jellyfin_host + "/Items", params, headers={"Authorization": self.token})
         if result.status_code != 200:
-            raise Exception(result.content)
+            raise ValueError(result.content)
         data = result.json()
         print(f"local media contains {data["TotalRecordCount"]} items of type {media_type}")
         return [{"id": item["Id"], "title": item["Name"], "originalTitle": item["OriginalTitle"] if "OriginalTitle" in item else item["Name"], "tmdbId": item["ProviderIds"]["Tmdb"], "hasFile": True, "monitored": False} for item in data["Items"]]
@@ -54,7 +54,7 @@ class Jellyfin:
     def get_epg(self, series: bool):
         result = requests.get(self.jellyfin_host + "/LiveTv/Programs", {"isSeries": series, "minStartDate": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")}, headers={"Authorization": self.token})
         if result.status_code != 200:
-            raise Exception(result.content)
+            raise ValueError(result.content)
         data = result.json()
         print(f"EPG returned {data["TotalRecordCount"]} items (series: {series})")
         return [{"id": item["Id"], "title": item["Name"], "StartDate": item["StartDate"], "EndDate": item["EndDate"], "hasFile": False, "monitored": False} for item in data["Items"]]
@@ -65,14 +65,14 @@ class Jellyfin:
     def get_scheduled_movies(self):
         result = requests.get(self.jellyfin_host + "/LiveTv/Timers", {"isActive": True}, headers={"Authorization": self.token})
         if result.status_code != 200:
-            raise Exception(result.content)
+            raise ValueError(result.content)
         data = result.json()
         print(f"Jellyfin returned {data["TotalRecordCount"]} active recordings")
         active_movies = data["Items"]
 
         result = requests.get(self.jellyfin_host + "/LiveTv/Timers", {"isScheduled": True}, headers={"Authorization": self.token})
         if result.status_code != 200:
-            raise Exception(result.content)
+            raise ValueError(result.content)
         data = result.json()
         print(f"Jellyfin returned {data["TotalRecordCount"]} scheduled recordings")
         scheduled_movies = data["Items"]
@@ -90,7 +90,7 @@ class Jellyfin:
                 }
         result = requests.post(self.jellyfin_host + "/LiveTv/Timers", json=data, headers={"Authorization": self.token, "Content-Type": "application/json"})
         if result.status_code != 204:
-            raise Exception(result.content)
+            raise ValueError(result.content)
 
     def create_series_timer(self, id: str, name: str):
         data = {"RecordAnyTime":true,
@@ -106,4 +106,4 @@ class Jellyfin:
                 }
         result = requests.post(self.jellyfin_host + "/LiveTv/SeriesTimers", json=data, headers={"Authorization": self.token, "Content-Type": "application/json"})
         if result.status_code != 204:
-            raise Exception(result.content)
+            raise ValueError(result.content)

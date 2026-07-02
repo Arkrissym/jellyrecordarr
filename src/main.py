@@ -115,7 +115,11 @@ def check_scheduled_recordings():
 
     for request in requests:
         # load all alternative titles for the requested movie
-        request_titles = tmdb.get_titles_by_id(request["tmdbId"])
+        request_titles = []
+        try:
+            request_titles = tmdb.get_titles_by_id(request["tmdbId"])
+        except ValueError as e:
+            print(f"Error while fetching alternate titles: {e}")
         request_titles.append(request["title"])
         request_titles.append(request["originalTitle"])
         print(request_titles)

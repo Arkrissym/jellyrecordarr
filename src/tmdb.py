@@ -12,7 +12,7 @@ class Tmdb:
         params = {"api_key": self.api_key, "language": self.language}
         result = requests.get("https://api.themoviedb.org/3/movie/" + id, params)
         if result.status_code != 200:
-            raise result.content
+            raise ValueError(result.content)
         data = result.json()
         print(f"Found '{data["title"]}' for id {data["id"]}")
         return {"id": data["id"], "title": data["title"], "originalTitle": data["original_title"], "tmdbId": data["id"]}
@@ -22,7 +22,7 @@ class Tmdb:
         params = {"api_key": self.api_key, "country": self.country}
         result = requests.get("https://api.themoviedb.org/3/movie/" + str(id) + "/alternative_titles", params)
         if result.status_code != 200:
-            raise result.content
+            raise ValueError(result.content)
         data = result.json()
         if not "titles" in data:
             return []
