@@ -13,6 +13,10 @@ jellyfin = Jellyfin(os.getenv("JELLYFIN_HOST"), os.getenv("JELLYFIN_API_KEY"))
 tmdb = Tmdb(os.getenv("TMDB_API_KEY"), os.getenv("TMDB_LANGUAGE"), os.getenv("TMDB_COUNTRY"))
 db = RequestsDB()
 
+max_concurrent_recordings = int(os.getenv("MAX_CONCURRENT_RECORDINGS", 1))
+unlimited_channels = os.getenv("UNLIMITED_CHANNELS", "").split(";")
+
+
 @app.route("/api/v3/system/status")
 def get_status():
     return {}
@@ -135,18 +139,18 @@ def check_scheduled_recordings():
                 if scheduled:
                     break
                 if epg_movie["title"] in request_titles:
-                    schedule_conflict = False
-                    start = datetime.datetime.fromisoformat(epg_movie["StartDate"])
-                    end = datetime.datetime.fromisoformat(epg_movie["EndDate"])
-                    # check all scheduled recordings to prevent concurrent recordings
-                    for scheduled_movie in scheduled_movies:
-                        schedule_start = datetime.datetime.fromisoformat(scheduled_movie["StartDate"])
-                        schedule_end = datetime.datetime.fromisoformat(scheduled_movie["EndDate"])
-                        if (start >= schedule_start and start <= schedule_end) or (end >= schedule_start and end <= schedule_end) or (start <= schedule_start and end >= schedule_end):
-                            print(f"Not scheduling '{request["title"]}' at {start}. Conflicting with recording of '{scheduled_movie["title"]}' at {schedule_start}")
-                            schedule_conflict = True
-                            schedule_conflicts += 1
-                    if not schedule_conflict:
+                    channel_name = jellyfin.get_channel_name(epg_movie["ChannelId"])
+                    if channel_name not in unlimited_channels:
+                        start = datetime.datetime.fromisoformat(epg_movie["StartDate"])
+                        end = datetime.datetime.fromisoformat(epg_movie["EndDate"])
+                        # check all scheduled recordings to prevent concurrent recordings
+                        for scheduled_movie in scheduled_movies:
+                            schedule_start = datetime.datetime.fromisoformat(scheduled_movie["StartDate"])
+                            schedule_end = datetime.datetime.fromisoformat(scheduled_movie["EndDate"])
+                            if (start >= schedule_start and start <= schedule_end) or (end >= schedule_start and end <= schedule_end) or (start <= schedule_start and end >= schedule_end):
+                                print(f"'{request["title"]}' at {start} is conflicting with recording of '{scheduled_movie["title"]}' at {schedule_start}")
+                                schedule_conflicts += 1
+                    if schedule_conflicts < max_concurrent_recordings:
                         print(f"Scheduling recording for '{request["title"]}' ('{epg_movie["title"]}')")
                         jellyfin.schedule_movie_recording(epg_movie["id"])
                         scheduled_movies.append(epg_movie)

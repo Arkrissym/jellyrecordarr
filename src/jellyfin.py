@@ -57,7 +57,17 @@ class Jellyfin:
             raise ValueError(result.content)
         data = result.json()
         print(f"EPG returned {data["TotalRecordCount"]} items (series: {series})")
-        return [{"id": item["Id"], "title": item["Name"], "StartDate": item["StartDate"], "EndDate": item["EndDate"], "hasFile": False, "monitored": False} for item in data["Items"]]
+        return [{"id": item["Id"], "title": item["Name"], "StartDate": item["StartDate"], "EndDate": item["EndDate"], "ChannelId": item["ChannelId"], "hasFile": False, "monitored": False} for item in data["Items"]]
+
+
+    # TV channel
+    @cached(cache=TTLCache(maxsize=4096, ttl=1800))
+    def get_channel_name(self, channel_id: str):
+        result = requests.get(self.jellyfin_host + "/LiveTv/Channels/" + channel_id, headers={"Authorization": self.token})
+        if result.status_code != 200:
+            raise ValueError(result.content)
+        data = result.json()
+        return data["Name"]
 
 
     # scheduled recordins

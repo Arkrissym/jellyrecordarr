@@ -19,6 +19,8 @@ services:
       - TMDB_API_KEY="your-api-key"
       - TMDB_LANGUAGE=de
       - TMDB_COUNTRY=de
+      - MAX_CONCURRENT_RECORDINGS=1
+      - UNLIMITED_CHANNELS=List of channels that are not limited. Separated by semicolon;
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5000/api/v3/system/status || exit 1
       start_period: 20s
