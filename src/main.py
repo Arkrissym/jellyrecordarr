@@ -44,8 +44,8 @@ def run_command():
 @app.route("/api/v3/queue")
 def get_queue():
     # return requests as 'queued', local media as 'completed'
-    movie_requests = [{"id": request["id"], "movieId": request["tmdbId"], "title": request["title"], "status": "queued"} for request in db.get_movie_requests()]
-    movie_requests += [{"id": movie["tmdbId"], "movieId": movie["tmdbId"], "title": movie["title"], "status": "completed"} for movie in jellyfin.get_local_movies()]
+    movie_requests = [{"id": request["tmdbId"], "movieId": request["tmdbId"], "title": request["title"], "status": "queued"} for request in db.get_movie_requests()]
+    movie_requests += [{"id": movie["tmdbId"], "movieId": movie["tmdbId"], "title": movie["title"], "status": movie["status"]} for movie in jellyfin.get_local_movies()]
     return {
         "page": 0,
         "pageSize": len(movie_requests),
@@ -75,7 +75,7 @@ def get_movie_lookup():
         tmdb_movie = tmdb.get_by_id(term[5:])
         titles = [tmdb_movie["title"], tmdb_movie["originalTitle"]]
     
-        # check local files, scheduled recordings & epg for requested title
+        # check local files for requested title
         for movie in jellyfin.get_local_movies():
             if movie["title"] in titles or ("originalTitle" in movie and movie["originalTitle"] in titles):
                 print(f"Found movie: {movie}")

@@ -40,7 +40,7 @@ class Jellyfin:
             raise ValueError(result.content)
         data = result.json()
         print(f"local media contains {data["TotalRecordCount"]} items of type {media_type}")
-        return [{"id": item["Id"], "title": item["Name"], "originalTitle": item["OriginalTitle"] if "OriginalTitle" in item else item["Name"], "tmdbId": item["ProviderIds"]["Tmdb"], "hasFile": True, "monitored": False} for item in data["Items"]]
+        return [{"id": item["Id"], "title": item["Name"], "originalTitle": item["OriginalTitle"] if "OriginalTitle" in item else item["Name"], "tmdbId": item["ProviderIds"]["Tmdb"], "status": "downloading" if "Status" in item and item["Status"] == "InProgress" else "completed", "hasFile": True, "monitored": False} for item in data["Items"]]
 
 
     # EPG data
