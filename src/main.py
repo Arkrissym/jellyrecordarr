@@ -114,14 +114,13 @@ def check_scheduled_recordings():
     epg_data = jellyfin.get_movies_from_epg()
 
     for request in requests:
-        # load all alternative titles for the requested movie
-        request_titles = []
-        try:
-            request_titles = tmdb.get_titles_by_id(request["tmdbId"])
+        request_titles = [request["title"], request["originalTitle"]]
+        try: # load all alternative titles for the requested movie
+            for t in tmdb.get_titles_by_id(request["tmdbId"]):
+                if not t in request_titles:
+                    request_titles.append(t)
         except ValueError as e:
             print(f"Error while fetching alternate titles: {e}")
-        request_titles.append(request["title"])
-        request_titles.append(request["originalTitle"])
         print(request_titles)
 
         if int(request["tmdbId"]) in local_media:
