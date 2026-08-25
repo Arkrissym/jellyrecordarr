@@ -134,11 +134,11 @@ def check_scheduled_recordings():
             print(f"Found existing scheduled recording for '{request["title"]}'")
         else:
             scheduled = False
-            schedule_conflicts = 0
             for epg_movie in epg_data:
                 if scheduled:
                     break
                 if epg_movie["title"] in request_titles:
+                    schedule_conflicts = 0
                     channel_name = jellyfin.get_channel_name(epg_movie["ChannelId"])
                     if channel_name not in unlimited_channels:
                         start = datetime.datetime.fromisoformat(epg_movie["StartDate"])
@@ -156,8 +156,8 @@ def check_scheduled_recordings():
                         scheduled_movies.append(epg_movie)
                         scheduled_movie_titles.append(epg_movie["title"])
                         scheduled = True
-            if not scheduled and schedule_conflicts == 0:
-                print(f"'{request["title"]}' not scheduled. No match found in epg.")
+            if not scheduled:
+                print(f"'{request["title"]}' not scheduled. No match found in epg or too many recordings already scheduled.")
 
 
 scheduler = BackgroundScheduler()
