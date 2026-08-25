@@ -135,15 +135,17 @@ def check_scheduled_recordings():
         else:
             scheduled = False
             for epg_movie in epg_data:
+                # movie is already scheduled, nothing to do
                 if scheduled:
                     break
+                # check all known titles
                 if epg_movie["title"] in request_titles:
                     schedule_conflicts = 0
                     channel_name = jellyfin.get_channel_name(epg_movie["ChannelId"])
                     if channel_name not in unlimited_channels:
                         start = datetime.datetime.fromisoformat(epg_movie["StartDate"])
                         end = datetime.datetime.fromisoformat(epg_movie["EndDate"])
-                        # check all scheduled recordings to prevent concurrent recordings
+                        # check all scheduled recordings to prevent too many concurrent recordings
                         for scheduled_movie in scheduled_movies:
                             schedule_start = datetime.datetime.fromisoformat(scheduled_movie["StartDate"])
                             schedule_end = datetime.datetime.fromisoformat(scheduled_movie["EndDate"])
@@ -151,7 +153,7 @@ def check_scheduled_recordings():
                                 print(f"'{request["title"]}' at {start} is conflicting with recording of '{scheduled_movie["title"]}' at {schedule_start}")
                                 schedule_conflicts += 1
                     if schedule_conflicts < max_concurrent_recordings:
-                        print(f"Scheduling recording for '{request["title"]}' ('{epg_movie["title"]}')")
+                        print(f"Scheduling recording for '{request["title"]}' ('{epg_movie["title"]}') at {datetime.datetime.fromisoformat(epg_movie["StartDate"])}")
                         jellyfin.schedule_movie_recording(epg_movie["id"])
                         scheduled_movies.append(epg_movie)
                         scheduled_movie_titles.append(epg_movie["title"])
