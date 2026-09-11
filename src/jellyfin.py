@@ -52,7 +52,7 @@ class Jellyfin:
 
     @cached(cache=TTLCache(maxsize=2, ttl=1800))
     def get_epg(self, series: bool):
-        result = requests.get(self.jellyfin_host + "/LiveTv/Programs", {"isSeries": series, "minStartDate": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")}, headers={"Authorization": self.token})
+        result = requests.get(self.jellyfin_host + "/LiveTv/Programs", {"isSeries": series, "minStartDate": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "sortBy": "StartDate"}, headers={"Authorization": self.token})
         if result.status_code != 200:
             raise ValueError(result.content)
         data = result.json()
