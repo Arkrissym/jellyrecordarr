@@ -10,12 +10,17 @@ class Tmdb:
     @cached(cache=TTLCache(maxsize=4096, ttl=86400))
     def get_by_id(self, id: str):
         params = {"api_key": self.api_key, "language": self.language}
-        result = requests.get("https://api.themoviedb.org/3/movie/" + id, params)
+        result = requests.get("https://api.themoviedb.org/3/movie/" + str(id), params)
         if result.status_code != 200:
             raise ValueError(result.content)
         data = result.json()
         print(f"Found '{data["title"]}' for id {data["id"]}")
-        return {"id": data["id"], "title": data["title"], "originalTitle": data["original_title"], "tmdbId": data["id"]}
+        return {"id": data["id"],
+                "title": data["title"],
+                "originalTitle": data["original_title"],
+                "tmdbId": data["id"],
+                "year": data["release_date"][:4] if "release_date" in data else None
+                }
 
     @cached(cache=TTLCache(maxsize=4096, ttl=86400))
     def get_titles_by_id(self, id: str):

@@ -57,7 +57,7 @@ class Jellyfin:
             raise ValueError(result.content)
         data = result.json()
         print(f"EPG returned {data["TotalRecordCount"]} items (series: {series})")
-        return [{"id": item["Id"], "title": item["Name"], "StartDate": item["StartDate"], "EndDate": item["EndDate"], "ChannelId": item["ChannelId"], "hasFile": False, "monitored": False} for item in data["Items"]]
+        return [{"id": item["Id"], "title": item["Name"], "year": str(item["ProductionYear"]) if "ProductionYear" in item else None, "StartDate": item["StartDate"], "EndDate": item["EndDate"], "ChannelId": item["ChannelId"], "hasFile": False, "monitored": False} for item in data["Items"]]
 
 
     # TV channel

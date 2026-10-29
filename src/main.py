@@ -81,7 +81,7 @@ def get_movie_lookup():
     
         # check local files for requested title
         for movie in jellyfin.get_local_movies():
-            if movie["title"] in titles or ("originalTitle" in movie and movie["originalTitle"] in titles):
+            if tmdb_movie["tmdbId"] == movie["tmdbId"]:
                 print(f"Found movie: {movie}")
                 movie["tags"] = []
                 movie["id"] = term[5:]
@@ -118,7 +118,17 @@ def check_scheduled_recordings():
     epg_data = jellyfin.get_movies_from_epg()
 
     for request in requests:
+        movie_year = None
         request_titles = [request["title"], request["originalTitle"]]
+
+        try: # load current metadata
+            d = tmdb.get_by_id(request["tmdbId"])
+            request_titles = [d["title"], d["originalTitle"]]
+            movie_year = d["year"]
+        except Exception as e:
+            print(f"Error while fetching current metadata: {e}")
+        print(f"movie year: {movie_year}")
+
         try: # load all alternative titles for the requested movie
             for t in tmdb.get_titles_by_id(request["tmdbId"]):
                 if not t in request_titles:
@@ -138,8 +148,8 @@ def check_scheduled_recordings():
                 # movie is already scheduled, nothing to do
                 if scheduled:
                     break
-                # check all known titles
-                if epg_movie["title"] in request_titles:
+                # check all known titles and the year
+                if epg_movie["title"] in request_titles and (epg_movie["year"] is None or epg_movie["year"] == movie_year):
                     schedule_conflicts = 0
                     channel_name = jellyfin.get_channel_name(epg_movie["ChannelId"])
                     if channel_name not in unlimited_channels:
