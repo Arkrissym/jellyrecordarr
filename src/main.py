@@ -105,6 +105,19 @@ def delete_movie(id):
     return make_response('', 200)
 
 
+def replace_chars(in_str: str):
+    return (in_str.lower()
+                .replace(" ", "")
+                .replace(":", "")
+                .replace(";", "")
+                .replace("?", "")
+                .replace("!", "")
+                .replace("+", "")
+                .replace("-", ""))
+
+def replace_chars_list(in_list: list(str)):
+    return [replace_chars(in_str) for in_str in in_list]
+
 # check scheduled recordings, schedule recordings for requested media if found in epg data
 def check_scheduled_recordings():
     requests = db.get_movie_requests()
@@ -114,7 +127,7 @@ def check_scheduled_recordings():
 
     local_media = [int(movie["tmdbId"]) for movie in jellyfin.get_local_movies()]
     scheduled_movies = jellyfin.get_scheduled_movies()
-    scheduled_movie_titles = [movie["title"] for movie in scheduled_movies]
+    scheduled_movie_titles = [replace_chars(movie["title"]) for movie in scheduled_movies]
     epg_data = jellyfin.get_movies_from_epg()
 
     for request in requests:
@@ -124,7 +137,7 @@ def check_scheduled_recordings():
         try: # load current metadata
             d = tmdb.get_by_id(request["tmdbId"])
             request_titles = [d["title"], d["originalTitle"]]
-            movie_year = d["year"]
+            movie_year = int(d["year"])
         except Exception as e:
             print(f"Error while fetching current metadata: {e}")
         print(f"movie year: {movie_year}")
@@ -135,6 +148,8 @@ def check_scheduled_recordings():
                     request_titles.append(t)
         except ValueError as e:
             print(f"Error while fetching alternate titles: {e}")
+        
+        request_titles = replace_chars_list(request_titles)
         print(request_titles)
 
         if int(request["tmdbId"]) in local_media:
@@ -149,7 +164,7 @@ def check_scheduled_recordings():
                 if scheduled:
                     break
                 # check all known titles and the year
-                if epg_movie["title"] in request_titles and (epg_movie["year"] is None or epg_movie["year"] == movie_year):
+                if replace_chars(epg_movie["title"]) in request_titles and (epg_movie["year"] is None or (int(epg_movie["year"]) >= movie_year-1 and int(epg_movie["year"]) <= movie_year+1)):
                     schedule_conflicts = 0
                     channel_name = jellyfin.get_channel_name(epg_movie["ChannelId"])
                     if channel_name not in unlimited_channels:
@@ -166,7 +181,7 @@ def check_scheduled_recordings():
                         print(f"Scheduling recording for '{request["title"]}' ('{epg_movie["title"]}') at {datetime.datetime.fromisoformat(epg_movie["StartDate"])}")
                         jellyfin.schedule_movie_recording(epg_movie["id"])
                         scheduled_movies.append(epg_movie)
-                        scheduled_movie_titles.append(epg_movie["title"])
+                        scheduled_movie_titles.append(replace_chars(epg_movie["title"]))
                         scheduled = True
             if not scheduled:
                 print(f"'{request["title"]}' not scheduled. No match found in epg or too many recordings already scheduled.")
