@@ -108,6 +108,8 @@ def delete_movie(id):
 def replace_chars(in_str: str):
     return (in_str.lower()
                 .replace(" ", "")
+                .replace(".", "")
+                .replace(",", "")
                 .replace(":", "")
                 .replace(";", "")
                 .replace("?", "")

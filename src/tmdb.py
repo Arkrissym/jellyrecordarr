@@ -32,5 +32,4 @@ class Tmdb:
         if not "titles" in data:
             return []
         result = [x["title"] for x in data["titles"]]
-        print(f"Found {len(result)} titles for id {data["id"]}")
         return result
